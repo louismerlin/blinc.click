@@ -1,0 +1,20 @@
+{
+  "name": "INC",
+  "version": "1.0.0",
+  "description": "A blockchain-based incremental game",
+  "main": "index.js",
+  "repository": "git@github.com:louismerlin/INC.git",
+  "author": "Louis Merlin <louis.merlin@epfl.ch>",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "next": "^4.0.3",
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0"
+  },
+  "scripts": {
+    "dev": "next",
+    "build": "next build",
+    "start": "next start"
+  }
+}
