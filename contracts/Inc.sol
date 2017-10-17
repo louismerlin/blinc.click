@@ -14,14 +14,16 @@ contract Inc{
     lastUpgrade = now;
   }
 
-  function upgrade() payable {
-    inc = (block.timestamp - lastUpgrade)*speed + inc;
-    if(inc >= upgradeCost){
+  function upgrade() payable returns (bool) {
+    uint currentInc = (now - lastUpgrade) * speed + inc;
+    if(currentInc >= upgradeCost) {
       speed++;
-      inc -= upgradeCost;
+      inc = currentInc - upgradeCost;
       upgradeCost *= 2;
       lastUpgrade = now;
+      return true;
     }
+    return false;
   }
 
 }
