@@ -5,21 +5,30 @@ contract Inc{
   uint public inc;
   uint public speed;
   uint public upgradeCost;
+  uint public baseCost;
+  uint public baseFactor;
+  uint public baseExp;
   uint public lastUpgrade;
+  uint public upgradeCount;
 
   function Inc() {
     inc = 0;
-    speed = 1;
-    upgradeCost = 25;
+    baseCost = 3265342;
+    upgradeCount = 1;
+    baseFactor = 244;
+    baseExp = 2;
+    upgradeCost = baseCost * (baseFactor**upgradeCount) / ((10**baseExp)**upgradeCount);
+    speed = upgradeCost / (60 * upgradeCount);
     lastUpgrade = now;
   }
 
-  function upgrade() payable returns (bool) {
+  function upgrade() returns (bool) {
     uint currentInc = (now - lastUpgrade) * speed + inc;
     if(currentInc >= upgradeCost) {
-      speed++;
+      upgradeCount++;
       inc = currentInc - upgradeCost;
-      upgradeCost *= 2;
+      upgradeCost = baseCost * (baseFactor**upgradeCount) / ((10**baseExp)**upgradeCount);
+      speed = upgradeCost / (60 * upgradeCount);
       lastUpgrade = now;
       return true;
     }

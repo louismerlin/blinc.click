@@ -38,14 +38,14 @@ class App extends Component {
   }
 
   componentDidMount() {
-    window.setInterval(this.blockchainSync, 5*1000)
+    window.setInterval(this.blockchainSync, 1*1000)
     window.setTimeout(this.blockchainSync, 0.5*1000)
 
     window.setInterval(() => {
       this.setState(state => ({date: Date.now()}))
     }, 1000/30)
 
-    this.state.web3.eth.getTransactionFromBlock(1, 0).then(transaction =>
+    this.state.web3.eth.getTransactionFromBlock(3, 0).then(transaction =>
       this.state.web3.eth.getTransactionReceipt(transaction.hash).then(receipt =>
         this.setState(state => ({
           contract: new this.state.web3.eth.Contract(INC.abi, receipt.contractAddress)
@@ -55,14 +55,16 @@ class App extends Component {
   }
 
   blockchainSync() {
-    if(this.state.web3) {
+    if(!this.state.block && this.state.web3) {
       this.state.web3.eth.getBlockNumber().then(
         block => this.setState(state => ({block: block}))
       )
     }
     if(this.state.contract) {
       this.state.contract.methods.inc().call().then(
-        inc => this.setState(state => ({inc: parseInt(inc)}))
+        inc => {
+          this.setState(state => ({inc: parseInt(inc)}))
+        }
       )
       this.state.contract.methods.speed().call().then(
         speed => this.setState(state => ({speed: parseInt(speed)}))
@@ -77,20 +79,25 @@ class App extends Component {
   }
 
   upgrade() {
-    this.state.web3.eth.getAccounts().then(accounts =>
-      this.state.contract.methods.upgrade().send({from: accounts[0]})
-                                           .then(blockchainSync)
-    )
+    this.state.web3.eth.getAccounts().then(accounts => {
+      return this.state.web3.eth.estimateGas({
+        data: this.state.contract.options.data
+      }).then(gas => {
+        return this.state.contract.methods.upgrade().send({
+          from: accounts[0],
+          gas: gas
+        })
+      })
+    })
   }
 
   render() {
     const secondsSinceLastUpgrade = this.state.date - this.state.lastUpgrade * 1000
-    const buttonText = `UPGRADE SPEED\n
-              ${ this.state.speed }/s➡️${ this.state.speed + 1}/s [${ this.state.upgradeCost }]`
+    const buttonText = `UPGRADE SPEED\n [${ this.state.upgradeCost }]`
     var currentInc = 0
     if (this.state.speed != null && this.state.inc != null)
       var currentInc = this.state.inc + Math.floor(secondsSinceLastUpgrade / 1000 * this.state.speed)
-//    const incStyle = { font-size: ''}
+
     return (
       <div className="container is-fluid">
         <Head>
@@ -111,7 +118,6 @@ class App extends Component {
                   onClick={this.upgrade}>{ buttonText }
           </button>
         </div>
-        {  }
       </div>
     )
   }
