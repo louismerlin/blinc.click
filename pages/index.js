@@ -12,6 +12,8 @@ class App extends Component {
 
     this.blockchainSync = this.blockchainSync.bind(this)
     this.upgrade = this.upgrade.bind(this)
+    this.setUsername = this.setUsername.bind(this)
+    this.changeFormUsername = this.changeFormUsername.bind(this)
   }
 
   state = {
@@ -23,7 +25,9 @@ class App extends Component {
     speed: null,
     upgradeCost: null,
     lastUpgrade: null,
-    date: null
+    date: null,
+    username: null,
+    formUsername: ''
   }
 
   componentWillMount() {
@@ -55,7 +59,7 @@ class App extends Component {
   }
 
   blockchainSync() {
-    if(!this.state.block && this.state.web3) {
+    if(this.state.web3) {
       this.state.web3.eth.getBlockNumber().then(
         block => this.setState(state => ({block: block}))
       )
@@ -75,13 +79,18 @@ class App extends Component {
       this.state.contract.methods.lastUpgrade().call().then(
         lastUpgrade => this.setState(state => ({lastUpgrade: lastUpgrade}))
       )
+      this.state.web3.eth.getAccounts().then(accounts =>
+        this.state.contract.methods.usernames(accounts[0]).call().then(
+          username => this.setState(state => ({username: username}))
+        )
+      )
     }
   }
 
   upgrade() {
     this.state.web3.eth.getAccounts().then(accounts => {
-      return this.state.web3.eth.estimateGas({
-        data: this.state.contract.options.data
+      return this.state.contract.methods.upgrade().estimateGas({
+        value: this.state.web3.utils.toWei(0.01, 'ether')
       }).then(gas => {
         return this.state.contract.methods.upgrade().send({
           from: accounts[0],
@@ -89,6 +98,23 @@ class App extends Component {
         })
       })
     })
+  }
+
+  setUsername() {
+    this.state.web3.eth.getAccounts().then(accounts => {
+      return this.state.contract.methods.setUsername(this.state.formUsername)
+      .estimateGas().then(gas => {
+        return this.state.contract.methods.setUsername(this.state.formUsername).send({
+          from: accounts[0],
+          gas: gas,
+          value: this.state.web3.utils.toWei(0.01, 'ether')
+        })
+      })
+    })
+  }
+
+  changeFormUsername(event) {
+    this.setState({formUsername: event.target.value })
   }
 
   render() {
@@ -105,10 +131,27 @@ class App extends Component {
           <title>INC</title>
         </Head>
         <style dangerouslySetInnerHTML={{ __html: stylesheet }} />
-        <div className="column">
-          <span className="tag is-success is-medium pull-right">
-            block { this.state.block }
-          </span>
+        <div className="columns is-centered">
+          <div className="column is-narrow">
+            <div className="tags has-addons ">
+              <span className="tag is-medium">block</span>
+              <span className="tag is-success is-medium">
+                { this.state.block }
+              </span>
+            </div>
+          </div>
+          <div className="column is-narrow">
+              <span className="tag is-medium">username</span>
+              <span className="tag is-info is-medium">
+                { this.state.username }
+              </span>
+          </div>
+          <div className="column is-narrow">
+            <input className="input" type="text" placeholder="/u/incblockchain"
+                    onChange={ this.changeFormUsername }/>
+            <button className="button"
+                    onClick={this.setUsername}>SET USERNAME</button>
+          </div>
         </div>
         <div className="column is-centered">
           <h1 className="title has-text-centered inc">{ currentInc }</h1>

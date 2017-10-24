@@ -5,20 +5,17 @@ contract Inc{
   uint public inc;
   uint public speed;
   uint public upgradeCost;
-  uint public baseCost;
-  uint public baseFactor;
-  uint public baseExp;
   uint public lastUpgrade;
-  uint public upgradeCount;
+  mapping(address => string) public usernames;
+
+  uint private upgradeCount;
+  uint private factor;
 
   function Inc() {
     inc = 0;
-    baseCost = 3265342;
     upgradeCount = 1;
-    baseFactor = 244;
-    baseExp = 2;
-    upgradeCost = baseCost * (baseFactor**upgradeCount) / ((10**baseExp)**upgradeCount);
-    speed = upgradeCost / (60 * upgradeCount);
+    upgradeCost = 2**(upgradeCount+4);
+    speed = upgradeCost / (32 * upgradeCount);
     lastUpgrade = now;
   }
 
@@ -27,12 +24,18 @@ contract Inc{
     if(currentInc >= upgradeCost) {
       upgradeCount++;
       inc = currentInc - upgradeCost;
-      upgradeCost = baseCost * (baseFactor**upgradeCount) / ((10**baseExp)**upgradeCount);
-      speed = upgradeCost / (60 * upgradeCount);
+      upgradeCost = 2**(upgradeCount+4);
+      speed = upgradeCost / (32 * upgradeCount);
       lastUpgrade = now;
       return true;
     }
     return false;
+  }
+
+  function setUsername(string username) payable {
+    if (msg.value >= 0.01 ether) {
+      usernames[msg.sender] = username;
+    }
   }
 
 }
