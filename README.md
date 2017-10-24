@@ -15,7 +15,7 @@ If you have not edited the contract, there should be nothing to do here.
 
 Create a local ethereum network by launching `testrpc`.
 
-Run `node depolyInc.js` to deploy the contract (**for the moment do this at
+Run `truffle migrate` to deploy the contract (**for the moment do this at
 block 0**)
 
 ### Frontend
