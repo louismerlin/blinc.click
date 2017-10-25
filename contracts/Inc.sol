@@ -11,6 +11,7 @@ contract Inc{
 
   uint private upgradeCount;
   uint private factor;
+  address private creator;
 
   function Inc() {
     inc = 0;
@@ -18,6 +19,7 @@ contract Inc{
     upgradeCost = 2**(upgradeCount+4);
     speed = upgradeCost / (32 * upgradeCount);
     lastUpgrade = now;
+    creator = msg.sender;
   }
 
   function upgrade() returns (bool) {
@@ -37,6 +39,12 @@ contract Inc{
   function setUsername(string username) payable {
     if (msg.value >= 0.01 ether) {
       usernames[msg.sender] = username;
+    }
+  }
+
+  function payout() {
+    if(msg.sender == creator) {
+      creator.transfer(this.balance);
     }
   }
 

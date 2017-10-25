@@ -52,7 +52,8 @@ class App extends Component {
     window.setInterval(() => {
       this.setState(state => ({date: Date.now()}))
     }, 1000/30)
-
+    
+    // TEST NET
     this.state.web3.eth.getTransactionFromBlock(3, 0).then(transaction =>
       this.state.web3.eth.getTransactionReceipt(transaction.hash).then(receipt =>
         this.setState(state => ({
@@ -60,6 +61,18 @@ class App extends Component {
         }))
       )
     )
+    /*
+    // RINKEBY
+    this.setState(state => ({
+      contract: new this.state.web3.eth.Contract(INC.abi, '0x20E48687787117996AE90Bc2ffb74429c3223569')
+    }))
+    */
+    /*
+    // MAIN NET
+    this.setState(state => ({
+      contract: new this.state.web3.eth.Contract(INC.abi, '0x')
+    }))
+    */
   }
 
   blockchainSync() {
@@ -154,7 +167,8 @@ class App extends Component {
       var currentInc = this.state.inc + Math.floor(secondsSinceLastUpgrade / 1000 * this.state.speed)
     var upgradesList = ''
     if(this.state.upgrades.length)
-      var upgradesList = this.state.upgrades.map((x, i) => <li key={i}>{x.username || x.hash}</li>)
+      var upgradesList = this.state.upgrades.map((x, i) => <li key={i}>
+        {x.username ? x.username + ' (' + x.hash + ')' : x.hash}</li>)
 
     return (
       <div className="container is-fluid">
