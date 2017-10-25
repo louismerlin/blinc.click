@@ -14,6 +14,8 @@ class App extends Component {
     this.upgrade = this.upgrade.bind(this)
     this.setUsername = this.setUsername.bind(this)
     this.changeFormUsername = this.changeFormUsername.bind(this)
+    this.getUpgraders = this.getUpgraders.bind(this)
+    this.getUsername = this.getUsername.bind(this)
   }
 
   state = {
@@ -27,7 +29,9 @@ class App extends Component {
     lastUpgrade: null,
     date: null,
     username: null,
-    formUsername: ''
+    formUsername: '',
+    upgrades: [],
+    upgradesSync: 1
   }
 
   componentWillMount() {
@@ -84,14 +88,37 @@ class App extends Component {
           username => this.setState(state => ({username: username}))
         )
       )
+      this.getUpgraders(this.state.upgradesSync)
     }
+  }
+
+  getUpgraders(i) {
+    this.state.contract.methods.upgrades(i).call().then(
+      upgrader => {
+        if(upgrader != '0x0000000000000000000000000000000000000000') {
+          this.setState(state => ({upgrades: [...state.upgrades, {hash: upgrader, username: ''}]}))
+          this.getUpgraders(i+1)
+          this.setState(state => ({upgradesSync: state.upgradesSync + 1}))
+          this.getUsername(i)
+        }
+        return new Promise(() => console.log)
+      }
+    )
+  }
+
+  getUsername(i) {
+    this.state.contract.methods.usernames(this.state.upgrades[i-1].hash).call().then(
+        username => {
+          var upgrades = this.state.upgrades
+          upgrades[i-1].username = username
+          this.setState(state => ({upgrades: upgrades}))
+        }
+    )
   }
 
   upgrade() {
     this.state.web3.eth.getAccounts().then(accounts => {
-      return this.state.contract.methods.upgrade().estimateGas({
-        value: this.state.web3.utils.toWei(0.01, 'ether')
-      }).then(gas => {
+      return this.state.contract.methods.upgrade().estimateGas().then(gas => {
         return this.state.contract.methods.upgrade().send({
           from: accounts[0],
           gas: gas
@@ -103,7 +130,9 @@ class App extends Component {
   setUsername() {
     this.state.web3.eth.getAccounts().then(accounts => {
       return this.state.contract.methods.setUsername(this.state.formUsername)
-      .estimateGas().then(gas => {
+      .estimateGas({
+        value: this.state.web3.utils.toWei(0.01, 'ether')
+      }).then(gas => {
         return this.state.contract.methods.setUsername(this.state.formUsername).send({
           from: accounts[0],
           gas: gas,
@@ -121,8 +150,11 @@ class App extends Component {
     const secondsSinceLastUpgrade = this.state.date - this.state.lastUpgrade * 1000
     const buttonText = `UPGRADE SPEED\n [${ this.state.upgradeCost }]`
     var currentInc = 0
-    if (this.state.speed != null && this.state.inc != null)
+    if(this.state.speed != null && this.state.inc != null)
       var currentInc = this.state.inc + Math.floor(secondsSinceLastUpgrade / 1000 * this.state.speed)
+    var upgradesList = ''
+    if(this.state.upgrades.length)
+      var upgradesList = this.state.upgrades.map((x, i) => <li key={i}>{x.username || x.hash}</li>)
 
     return (
       <div className="container is-fluid">
@@ -131,35 +163,35 @@ class App extends Component {
           <title>INC</title>
         </Head>
         <style dangerouslySetInnerHTML={{ __html: stylesheet }} />
-        <div className="columns is-centered">
-          <div className="column is-narrow">
+        <div className="columns">
+          <div className="column is-one-quarter">
             <div className="tags has-addons ">
               <span className="tag is-medium">block</span>
               <span className="tag is-success is-medium">
                 { this.state.block }
               </span>
             </div>
-          </div>
-          <div className="column is-narrow">
+            <div className="tags has-addons">
               <span className="tag is-medium">username</span>
               <span className="tag is-info is-medium">
                 { this.state.username }
               </span>
-          </div>
-          <div className="column is-narrow">
+            </div>
             <input className="input" type="text" placeholder="/u/incblockchain"
                     onChange={ this.changeFormUsername }/>
             <button className="button"
                     onClick={this.setUsername}>SET USERNAME</button>
           </div>
-        </div>
-        <div className="column is-centered">
-          <h1 className="title has-text-centered inc">{ currentInc }</h1>
-        </div>
-        <div className="columns is-centered">
-          <button className="column button is-info is-narrow is-large"
-                  onClick={this.upgrade}>{ buttonText }
-          </button>
+          <div className="column is-half has-text-centered">
+            <h1 className="title inc">{ currentInc }</h1>
+            <button className="button is-info is-large"
+                    onClick={this.upgrade}>{ buttonText }
+            </button>
+          </div>
+          <div className="column is-one-quarter">
+            <h2 className="title">Upgraders list</h2>
+            <ul>{ upgradesList }</ul>
+          </div>
         </div>
       </div>
     )

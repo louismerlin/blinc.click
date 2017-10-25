@@ -7,6 +7,7 @@ contract Inc{
   uint public upgradeCost;
   uint public lastUpgrade;
   mapping(address => string) public usernames;
+  mapping(uint => address) public upgrades;
 
   uint private upgradeCount;
   uint private factor;
@@ -22,6 +23,7 @@ contract Inc{
   function upgrade() returns (bool) {
     uint currentInc = (now - lastUpgrade) * speed + inc;
     if(currentInc >= upgradeCost) {
+      upgrades[upgradeCount] = msg.sender;
       upgradeCount++;
       inc = currentInc - upgradeCost;
       upgradeCost = 2**(upgradeCount+4);
