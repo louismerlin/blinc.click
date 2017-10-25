@@ -147,7 +147,7 @@ class App extends Component {
     this.state.upgrades.forEach(u => {
       const f = this.state.bestList.findIndex(b => b.hash == u.hash)
       if(f != -1) this.state.bestList[f].score++
-      else this.state.bestList.push({hash: u.hash, username: u.username, score: 0})
+      else this.state.bestList.push({hash: u.hash, username: u.username, score: 1})
     })
     this.state.bestList = this.state.bestList.sort((x, y) => {return y.score-x.score})
     this.forceUpdate()
