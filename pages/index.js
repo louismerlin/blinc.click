@@ -16,6 +16,8 @@ class App extends Component {
     this.changeFormUsername = this.changeFormUsername.bind(this)
     this.getUpgraders = this.getUpgraders.bind(this)
     this.getUsername = this.getUsername.bind(this)
+    this.contractSync = this.contractSync.bind(this)
+    this.computeUpgraders = this.computeUpgraders.bind(this)
   }
 
   state = {
@@ -31,7 +33,9 @@ class App extends Component {
     username: null,
     formUsername: '',
     upgrades: [],
-    upgradesSync: 1
+    upgradesSync: 1,
+    reverseList: [],
+    bestList: []
   }
 
   componentWillMount() {
@@ -46,14 +50,15 @@ class App extends Component {
   }
 
   componentDidMount() {
-    window.setInterval(this.blockchainSync, 1*1000)
+    window.setInterval(this.blockchainSync, 5*1000)
     window.setTimeout(this.blockchainSync, 0.5*1000)
 
     window.setInterval(() => {
       this.setState(state => ({date: Date.now()}))
     }, 1000/30)
-    
+
     // TEST NET
+    /*
     this.state.web3.eth.getTransactionFromBlock(3, 0).then(transaction =>
       this.state.web3.eth.getTransactionReceipt(transaction.hash).then(receipt =>
         this.setState(state => ({
@@ -61,12 +66,11 @@ class App extends Component {
         }))
       )
     )
-    /*
+    */
     // RINKEBY
     this.setState(state => ({
       contract: new this.state.web3.eth.Contract(INC.abi, '0x20E48687787117996AE90Bc2ffb74429c3223569')
     }))
-    */
     /*
     // MAIN NET
     this.setState(state => ({
@@ -78,9 +82,17 @@ class App extends Component {
   blockchainSync() {
     if(this.state.web3) {
       this.state.web3.eth.getBlockNumber().then(
-        block => this.setState(state => ({block: block}))
+        block => {
+          if(this.state.block != block) {
+            this.setState(state => ({block: block}))
+            this.contractSync()
+          }
+          return () => {}
+        }
       )
     }
+  }
+  contractSync() {
     if(this.state.contract) {
       this.state.contract.methods.inc().call().then(
         inc => {
@@ -109,9 +121,9 @@ class App extends Component {
     this.state.contract.methods.upgrades(i).call().then(
       upgrader => {
         if(upgrader != '0x0000000000000000000000000000000000000000') {
-          this.setState(state => ({upgrades: [...state.upgrades, {hash: upgrader, username: ''}]}))
+          this.state.upgrades[i-1] = {hash: upgrader, username: ''}
+          this.computeUpgraders()
           this.getUpgraders(i+1)
-          this.setState(state => ({upgradesSync: state.upgradesSync + 1}))
           this.getUsername(i)
         }
         return new Promise(() => console.log)
@@ -122,11 +134,23 @@ class App extends Component {
   getUsername(i) {
     this.state.contract.methods.usernames(this.state.upgrades[i-1].hash).call().then(
         username => {
-          var upgrades = this.state.upgrades
-          upgrades[i-1].username = username
-          this.setState(state => ({upgrades: upgrades}))
+          this.state.upgrades[i-1].username = username
+          this.computeUpgraders()
         }
     )
+  }
+
+  computeUpgraders() {
+    this.state.reverseList = Array.from(this.state.upgrades)
+    this.state.reverseList.reverse()
+    this.state.bestList = []
+    this.state.upgrades.forEach(u => {
+      const f = this.state.bestList.findIndex(b => b.hash == u.hash)
+      if(f != -1) this.state.bestList[f].score++
+      else this.state.bestList.push({hash: u.hash, username: u.username, score: 0})
+    })
+    this.state.bestList = this.state.bestList.sort((x, y) => {return y.score-x.score})
+    this.forceUpdate()
   }
 
   upgrade() {
@@ -136,7 +160,7 @@ class App extends Component {
           from: accounts[0],
           gas: gas
         })
-      })
+      }).catch(console.log)
     })
   }
 
@@ -151,7 +175,7 @@ class App extends Component {
           gas: gas,
           value: this.state.web3.utils.toWei(0.01, 'ether')
         })
-      })
+      }).catch(console.log)
     })
   }
 
@@ -161,17 +185,23 @@ class App extends Component {
 
   render() {
     const secondsSinceLastUpgrade = this.state.date - this.state.lastUpgrade * 1000
-    const buttonText = `UPGRADE SPEED\n [${ this.state.upgradeCost }]`
+    const buttonText = `UPGRADE FOR ${ (new Number(this.state.upgradeCost)).toPrecision(3) }`
     var currentInc = 0
     if(this.state.speed != null && this.state.inc != null)
-      var currentInc = this.state.inc + Math.floor(secondsSinceLastUpgrade / 1000 * this.state.speed)
-    var upgradesList = ''
-    if(this.state.upgrades.length)
-      var upgradesList = this.state.upgrades.map((x, i) => <li key={i}>
-        {x.username ? x.username + ' (' + x.hash + ')' : x.hash}</li>)
+      var currentInc = (new Number(this.state.inc + Math.floor(secondsSinceLastUpgrade / 1000 * this.state.speed))).toPrecision(5)
+
+    var bestTable = ''
+    if(this.state.bestList.length)
+      var bestTable = this.state.bestList.map((x, i) => <tr className={i==0 ? 'is-selected' : ''} key={i}>
+        <td>{ i+1 }</td><td>{ x.username }</td><td>{ x.hash.substr(0, 10) }</td><td>{ x.score }</td></tr>)
+
+    var latestTable = ''
+    if(this.state.reverseList.length)
+      var latestTable = this.state.reverseList.map((x, i) => <tr className={i==0 ? 'is-selected' : ''} key={i}>
+        <td>{ x.username }</td><td>{ x.hash.substr(0, 10) }</td></tr>)
 
     return (
-      <div className="container is-fluid">
+      <div className="section container is-fluid">
         <Head>
           <meta name="viewport" content="width=device-width, initial-scale=1"/>
           <title>INC</title>
@@ -179,7 +209,7 @@ class App extends Component {
         <style dangerouslySetInnerHTML={{ __html: stylesheet }} />
         <div className="columns">
           <div className="column is-one-quarter">
-            <div className="tags has-addons ">
+            <div className="tags has-addons">
               <span className="tag is-medium">block</span>
               <span className="tag is-success is-medium">
                 { this.state.block }
@@ -191,20 +221,43 @@ class App extends Component {
                 { this.state.username }
               </span>
             </div>
-            <input className="input" type="text" placeholder="/u/incblockchain"
-                    onChange={ this.changeFormUsername }/>
-            <button className="button"
-                    onClick={this.setUsername}>SET USERNAME</button>
+            <div className="field has-addons">
+              <div className="control">
+                <input className="input is-info" type="text" placeholder="/u/incblockchain"
+                      onChange={ this.changeFormUsername }/>
+              </div>
+              <div className="control">
+                <a className="button is-info" onClick={this.setUsername}>
+                  SET USERNAME
+                </a>
+              </div>
+            </div>
           </div>
           <div className="column is-half has-text-centered">
+            <div className="is-hidden-mobile" style={{height: '25vh'}}></div>
             <h1 className="title inc">{ currentInc }</h1>
-            <button className="button is-info is-large"
+            <br/>
+            <button className="button is-primary is-large"
                     onClick={this.upgrade}>{ buttonText }
             </button>
           </div>
           <div className="column is-one-quarter">
-            <h2 className="title">Upgraders list</h2>
-            <ul>{ upgradesList }</ul>
+            <h2 className="title">Top Upgraders</h2>
+            <div style={{maxHeight: '40vh', overflow: 'auto'}}>
+              <table className="table is-narrow is-fullwidth">
+                <tbody>
+                  { bestTable }
+                </tbody>
+              </table>
+            </div>
+            <h2 className="title">Latest Upgraders</h2>
+            <div style={{maxHeight: '40vh', overflow: 'auto'}}>
+              <table className="table is-narrow is-fullwidth">
+                <tbody>
+                  { latestTable }
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
