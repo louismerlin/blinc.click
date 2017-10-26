@@ -19,13 +19,30 @@ $danger: $orange;
 // Use the new serif family
 //$family-primary: $family-serif;
 */
-// $primary: $grey-darker;
+$primary: #2541b2;
 // $primary-invert: $white-ter;
 
 @import '~bulma';
 
 .inc {
-  font-size: 7vw;
+  font-size: 7vw
+}
+
+tr:hover {
+  background: $light
+}
+tr .hash {
+  margin-top: 3px;
+  font-size: small;
+}
+tr .invisiHash {
+  display: none;
+}
+tr:hover .hash {
+  display: block
+}
+tr:hover .username {
+  display: none
 }
 
 /*

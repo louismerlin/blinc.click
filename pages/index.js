@@ -2,6 +2,7 @@ import Head from 'next/head'
 import { Component } from 'react'
 import Web3 from 'web3'
 import stylesheet from 'styles/index.scss'
+import UpgradesList from '../components/upgradesList'
 
 const INC = require('../build/contracts/Inc.json')
 
@@ -121,6 +122,7 @@ class App extends Component {
     this.state.contract.methods.upgrades(i).call().then(
       upgrader => {
         if(upgrader != '0x0000000000000000000000000000000000000000') {
+          this.setState(state => ({upgradesSync: state.upgradesSync + 1}))
           this.state.upgrades[i-1] = {hash: upgrader, username: ''}
           this.computeUpgraders()
           this.getUpgraders(i+1)
@@ -190,73 +192,83 @@ class App extends Component {
     if(this.state.speed != null && this.state.inc != null)
       var currentInc = (new Number(this.state.inc + Math.floor(secondsSinceLastUpgrade / 1000 * this.state.speed))).toPrecision(5)
 
-    var bestTable = ''
-    if(this.state.bestList.length)
-      var bestTable = this.state.bestList.map((x, i) => <tr className={i==0 ? 'is-selected' : ''} key={i}>
-        <td>{ i+1 }</td><td>{ x.username }</td><td>{ x.hash.substr(0, 10) }</td><td>{ x.score }</td></tr>)
-
-    var latestTable = ''
-    if(this.state.reverseList.length)
-      var latestTable = this.state.reverseList.map((x, i) => <tr className={i==0 ? 'is-selected' : ''} key={i}>
-        <td>{ x.username }</td><td>{ x.hash.substr(0, 10) }</td></tr>)
-
     return (
-      <div className="section container is-fluid">
+      <div>
         <Head>
           <meta name="viewport" content="width=device-width, initial-scale=1"/>
-          <title>INC</title>
+          <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
+          <title>blinc.click</title>
         </Head>
-        <style dangerouslySetInnerHTML={{ __html: stylesheet }} />
-        <div className="columns">
-          <div className="column is-one-quarter">
-            <div className="tags has-addons">
-              <span className="tag is-medium">block</span>
-              <span className="tag is-success is-medium">
-                { this.state.block }
-              </span>
-            </div>
-            <div className="tags has-addons">
-              <span className="tag is-medium">username</span>
-              <span className="tag is-info is-medium">
-                { this.state.username }
-              </span>
-            </div>
-            <div className="field has-addons">
-              <div className="control">
-                <input className="input is-info" type="text" placeholder="/u/incblockchain"
-                      onChange={ this.changeFormUsername }/>
+        <nav className="navbar" role="navigation" aria-label="main navigation">
+          <div className="navbar-brand">
+          </div>
+          <div className="navbar-menu is-active">
+            <div className="navbar-end">
+              <a className="navbar-item" href="./" target="_blank">
+                <span className="icon">
+                  <i className="fa fa-lg fa-reddit"></i>
+                </span>
+              </a>
+              <div className="navbar-item">
+                <div className="tags has-addons">
+                  <span className="tag is-medium">username</span>
+                  <span className="tag is-info is-medium">
+                    { this.state.username }
+                  </span>
+                </div>
               </div>
-              <div className="control">
-                <a className="button is-info" onClick={this.setUsername}>
-                  SET USERNAME
-                </a>
+              <div className="navbar-item">
+                <div className="tags has-addons">
+                  <span className="tag is-medium">block</span>
+                  <span className="tag is-success is-medium">
+                    { this.state.block }
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-          <div className="column is-half has-text-centered">
-            <div className="is-hidden-mobile" style={{height: '25vh'}}></div>
-            <h1 className="title inc">{ currentInc }</h1>
-            <br/>
-            <button className="button is-primary is-large"
-                    onClick={this.upgrade}>{ buttonText }
-            </button>
-          </div>
-          <div className="column is-one-quarter">
-            <h2 className="title">Top Upgraders</h2>
-            <div style={{maxHeight: '40vh', overflow: 'auto'}}>
-              <table className="table is-narrow is-fullwidth">
-                <tbody>
-                  { bestTable }
-                </tbody>
-              </table>
+        </nav>
+        <div className="section container is-fluid">
+          <style dangerouslySetInnerHTML={{ __html: stylesheet }} />
+          <div className="columns">
+            <div className="column is-one-quarter">
+              <p className="title is-1 has-text-primary">blinc.click</p>
+              <p className="subtitle is-3">The blockchain incremental experiment</p>
+              <br/>
+              <div className="content">
+                <h2>What is this ?</h2>
+                <p>This website is plain html & javascript, and it connects to the <a>ethereum</a> blockchain using <a>metamask</a> or <a>mist</a>.</p>
+                <h2>Incremental experiment ?</h2>
+                <p> There is a smart contract on the blockchain with this number in the center, and your goal is to make it go as high as possible ! You can do this by upgrading the speed through a blockchain transaction.</p>
+                <h2>How can I replace my address with my username ?</h2>
+                <p>Use the form bellow. It costs 0.01 ether to change your username, and you can do it as much as you like !</p>
+              </div>
+
+              <div className="field has-addons">
+                <div className="control">
+                  <input className="input is-info" type="text" placeholder="/u/blinc.click"
+                        onChange={ this.changeFormUsername }/>
+                </div>
+                <div className="control">
+                  <a className="button is-info" onClick={this.setUsername}>
+                    SET USERNAME
+                  </a>
+                </div>
+              </div>
             </div>
-            <h2 className="title">Latest Upgraders</h2>
-            <div style={{maxHeight: '40vh', overflow: 'auto'}}>
-              <table className="table is-narrow is-fullwidth">
-                <tbody>
-                  { latestTable }
-                </tbody>
-              </table>
+            <div className="column is-half has-text-centered">
+              <div className="is-hidden-mobile" style={{height: '25vh'}}></div>
+              <h1 className="title inc">{ currentInc }</h1>
+              <br/>
+              <button className="button is-primary is-large"
+                      onClick={this.upgrade}>{ buttonText }
+              </button>
+            </div>
+            <div className="column is-one-quarter">
+              <h2 className="title">Top Upgraders</h2>
+              <UpgradesList table={ this.state.bestList } />
+              <h2 className="title">Latest Upgraders</h2>
+              <UpgradesList table={ this.state.reverseList } />
             </div>
           </div>
         </div>
