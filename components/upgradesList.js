@@ -10,7 +10,7 @@ export default class UpgradesList extends Component {
             { this.props.table.map((x, i, t) =>
               <tr key={i}>
                 <td>{ x.score ? (i < 3 ?
-                    <span className="icon">
+                    <span className="icon" style={{marginLeft: '-7px'}}>
                       <i className="fa fa-trophy" style={{color: colors[i]}}></i>
                     </span>
                    : i + 1) : '#' + (t.length - i) }</td>
