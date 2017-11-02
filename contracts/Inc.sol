@@ -6,37 +6,38 @@ contract Inc{
   uint public speed;
   uint public upgradeCost;
   uint public lastUpgrade;
-  mapping(address => string) public usernames;
-  mapping(uint => address) public upgrades;
+  address[] public upgraders;
+  uint public upgradeCount;
 
-  uint private upgradeCount;
-  uint private factor;
+  mapping(address => bytes32) public usernames;
+
   address private creator;
 
   function Inc() {
     inc = 0;
-    upgradeCount = 1;
-    upgradeCost = 2**(upgradeCount+4);
-    speed = upgradeCost / (32 * upgradeCount);
+    upgradeCount = 0;
+    upgradeCost = 2**(upgradeCount+5);
+    speed = upgradeCost / (32 * (upgradeCount+1));
     lastUpgrade = now;
     creator = msg.sender;
+    upgraders = new address[](0);
   }
 
   function upgrade() returns (bool) {
     uint currentInc = (now - lastUpgrade) * speed + inc;
     if(currentInc >= upgradeCost) {
-      upgrades[upgradeCount] = msg.sender;
+      upgraders.push(msg.sender);
       upgradeCount++;
       inc = currentInc - upgradeCost;
-      upgradeCost = 2**(upgradeCount+4);
-      speed = upgradeCost / (32 * upgradeCount);
+      upgradeCost = 2**(upgradeCount+5);
+      speed = upgradeCost / (32 * (upgradeCount+1));
       lastUpgrade = now;
       return true;
     }
     return false;
   }
 
-  function setUsername(string username) payable {
+  function setUsername(bytes32 username) payable {
     if (msg.value >= 0.01 ether) {
       usernames[msg.sender] = username;
     }
@@ -46,6 +47,10 @@ contract Inc{
     if(msg.sender == creator) {
       creator.transfer(this.balance);
     }
+  }
+
+  function getUpgraders() public constant returns (address[]) {
+    return upgraders;
   }
 
 }

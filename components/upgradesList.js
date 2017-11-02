@@ -13,17 +13,19 @@ export default class UpgradesList extends Component {
                     <span className="icon" style={{marginLeft: '-7px'}}>
                       <i className="fa fa-trophy" style={{color: colors[i]}}></i>
                     </span>
-                   : i + 1) : '#' + (t.length - i) }</td>
+                   : i + 1) : '#' + (t.length - i) }
+                </td>
                 <td>
-                  { x.username != '' ?
-                    <div><span className="username">{ x.username.substr(0, 41) }</span>
+                  { this.props.usernames.get(x.hash) != '' ?
+                    <div><span className="username">{ this.props.usernames.get(x.hash) }</span>
                     <span className="hash invisiHash">{ x.hash }</span></div>
                     :
-                    <span className="hash">{ x.hash }</span>
+                    <span className="hash">{ x.hash + "hi" }</span>
                   }
                 </td>
                 { x.score && <td>{ x.score }</td> }
-              </tr>) }
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
