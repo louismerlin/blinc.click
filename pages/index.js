@@ -39,7 +39,8 @@ class App extends Component {
     bestList: [],
     usernames: new Map(),
     noWeb3: false,
-    loading: true
+    loading: true,
+    warning: ''
   }
 
   componentWillMount() {
@@ -89,6 +90,7 @@ class App extends Component {
         block => {
           if(this.state.block != block) {
             this.setState({block: block})
+            this.setState({warning: ''})
             if(this.state.contract) {
               this.state.contract.methods.upgradeCount().call().then(
                 upgradeCount => {
@@ -96,15 +98,17 @@ class App extends Component {
                     this.setState({upgradeCount: upgradeCount})
                     this.syncContract()
                   }
+                  return null
                 }
               )
               this.syncUsernames()
+              return null
             }
           }
         }
       )
     }
-    return () => {}
+    return null
   }
 
   syncContract() {
@@ -138,6 +142,7 @@ class App extends Component {
             return({bestList: bestList.sort((x, y) => {return y.score-x.score})})
           })
           this.syncUsernames(upgraders)
+          return null
         }
       )
       this.state.web3.eth.getAccounts().then(accounts =>
@@ -146,7 +151,7 @@ class App extends Component {
         )
       )
     }
-    return () => {}
+    return null
   }
 
   syncUsernames(upgraders) {
@@ -163,7 +168,7 @@ class App extends Component {
       )
     })
     if (hasBeenUpdated) this.forceUpdate()
-    return () => {}
+    return null
   }
 
   upgrade() {
@@ -173,7 +178,8 @@ class App extends Component {
           from: accounts[0],
           gas: gas
         })
-      }).catch(console.log)
+      }).then(() => this.setState({warning: 'Transaction was sent'}))
+        .catch(() => this.setState({warning: 'Transaction was not sent'}))
     })
   }
 
@@ -188,7 +194,8 @@ class App extends Component {
           gas: gas,
           value: this.state.web3.utils.toWei(0.01, 'ether')
         })
-      }).catch(console.log)
+      }).then(() => this.setState({warning: 'Transaction was sent'}))
+        .catch(() => this.setState({warning: 'Transaction was not sent'}))
     })
   }
 
@@ -207,11 +214,18 @@ class App extends Component {
 
   render() {
     const secondsSinceLastUpgrade = this.state.date - this.state.lastUpgrade * 1000
-    const buttonText = `UPGRADE FOR ${ (new Number(this.state.upgradeCost)).toPrecision(3) }`
+
+    var currentUpgrade = (new Number(this.state.upgradeCost)).toPrecision(3)
+    if (currentUpgrade < 1000 && currentUpgrade.toString().split('.')[1])
+      var currentUpgrade = currentUpgrade.toString().split('.')[0]
+    const buttonText = `UPGRADE FOR ${ currentUpgrade }`
 
     var currentInc = 0
     if(this.state.speed != null && this.state.inc != null)
       var currentInc = (new Number(this.state.inc + Math.floor(secondsSinceLastUpgrade / 1000 * this.state.speed))).toPrecision(5)
+    if (currentInc < 100000 && currentInc.toString().split('.')[1])
+      var currentInc = currentInc.toString().split('.')[0]
+
 
     if(this.state.noWeb3) return(<div>Yo install metamask</div>)
 
@@ -254,7 +268,9 @@ class App extends Component {
               </div>
             </div>
             <div className="column is-half has-text-centered">
-              <div className="is-hidden-mobile" style={{height: '25vh'}}></div>
+              <div className="is-hidden-mobile" style={{height: '25vh'}}>
+              { this.state.warning != '' && <div className="notification is-warning">{ this.state.warning }</div> }
+              </div>
               <h1 className="title inc">{ currentInc }</h1>
               <br/>
               <button className="button is-primary is-large"
