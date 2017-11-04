@@ -173,11 +173,10 @@ class App extends Component {
 
   upgrade() {
     this.state.web3.eth.getAccounts().then(accounts => {
-      return this.state.contract.methods.upgrade().estimateGas().then(gas => {
-        return this.state.contract.methods.upgrade().send({
-          from: accounts[0],
-          gas: gas
-        })
+      return this.state.contract.methods.upgrade().send({
+        from: accounts[0],
+        gas: 80000,
+        gasPrice: this.state.web3.utils.toWei(4, 'gwei')
       }).then(() => this.setState({warning: 'Transaction was sent'}))
         .catch(() => this.setState({warning: 'Transaction was not sent'}))
     })
@@ -192,6 +191,7 @@ class App extends Component {
         return this.state.contract.methods.setUsername(this.state.web3.utils.stringToHex(this.state.formString)).send({
           from: accounts[0],
           gas: gas,
+          gasPrice: this.state.web3.utils.toWei(4, 'gwei'),
           value: this.state.web3.utils.toWei(0.01, 'ether')
         })
       }).then(() => this.setState({warning: 'Transaction was sent'}))
