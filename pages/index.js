@@ -1,15 +1,12 @@
 import Head from 'next/head'
 import { Component } from 'react'
 import Web3 from 'web3'
-import ReactGA from 'react-ga';
 import stylesheet from 'styles/index.scss'
 import UpgradesList from '../components/upgradesList'
 import Navbar from '../components/navbar'
 import Description from '../components/description'
 
 const INC = require('../build/contracts/Inc.json')
-
-ReactGA.initialize('UA-105326072-2');
 
 class App extends Component {
 
