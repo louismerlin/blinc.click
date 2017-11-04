@@ -74,16 +74,16 @@ class App extends Component {
       )
     )
     */
+    /*
     // RINKEBY
     this.setState(state => ({
       contract: new state.web3.eth.Contract(INC.abi, '0x9e2CD3e60bC39535B1A6e4C9a6Cf8f5bF502598f')
     }))
-    /*
+    */
     // MAIN NET
     this.setState(state => ({
-      contract: new state.web3.eth.Contract(INC.abi, '0x')
+      contract: new state.web3.eth.Contract(INC.abi, '0xD960d83bC52b894755Ed1B3197FBE221b41F517C')
     }))
-    */
   }
 
   syncBlockchain() {
