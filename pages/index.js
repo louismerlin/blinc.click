@@ -41,7 +41,8 @@ class App extends Component {
     usernames: new Map(),
     noWeb3: false,
     loading: true,
-    warning: ''
+    warning: '',
+    account: null
   }
 
   componentWillMount() {
@@ -108,6 +109,9 @@ class App extends Component {
           }
         }
       )
+      this.state.web3.eth.getAccounts().then(accounts =>
+        this.setState({account: accounts[0]})
+      )
     }
     return null
   }
@@ -145,11 +149,6 @@ class App extends Component {
           this.syncUsernames(upgraders)
           return null
         }
-      )
-      this.state.web3.eth.getAccounts().then(accounts =>
-        this.state.contract.methods.usernames(accounts[0]).call().then(
-          username => this.setState({username: this.state.web3.utils.hexToString(username)})
-        )
       )
     }
     return null
@@ -234,7 +233,7 @@ class App extends Component {
           <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
           <title>blinc.click</title>
         </Head>
-        <Navbar username={ this.state.username } block={ this.state.block }/>
+        <Navbar username={ this.state.usernames.get(this.state.account) } block={ this.state.block }/>
         <div className="section container is-fluid">
           <style dangerouslySetInnerHTML={{ __html: stylesheet }} />
           <div className="columns">
