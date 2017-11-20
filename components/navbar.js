@@ -4,6 +4,11 @@ export default props => (
     </div>
     <div className="navbar-menu is-active">
       <div className="navbar-end">
+        <a className="navbar-item" href="https://github.com/louismerlin/blinc.click">
+          <span className="icon" style={{fontSize: '2em'}}>
+            <i className="fa fa-github"></i>
+          </span>
+        </a>
         <div className="navbar-item">
           <div className="tags has-addons">
             <span className="tag is-medium">username</span>
